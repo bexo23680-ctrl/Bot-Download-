@@ -20,13 +20,11 @@ class Database:
     async def connect(self):
         """Connect to database and create tables. Removes corrupted database files."""
         try:
-            # Remove corrupted/empty database if exists
             if os.path.exists(self.db_path):
                 if os.path.getsize(self.db_path) == 0:
                     logger.warning(f"Removing empty database file: {self.db_path}")
                     os.remove(self.db_path)
                 else:
-                    # Check if file is readable
                     try:
                         with open(self.db_path, 'rb') as f:
                             header = f.read(16)
