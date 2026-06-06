@@ -376,4 +376,116 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text(f"✅ Broadcast sent to {count} users.")
 
-async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE
+async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """حظر مستخدم."""
+    if update.effective_user.id not in ADMINS:
+        return
+    if not context.args:
+        await update.message.reply_text("Usage: /ban <user_id>")
+        return
+    try:
+        uid = int(context.args[0])
+    except ValueError:
+        await update.message.reply_text("Invalid user ID.")
+        return
+    await db.set_ban(uid, True)
+    await update.message.reply_text(f"🚫 User {uid} banned.")
+
+async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """فك حظر مستخدم."""
+    if update.effective_user.id not in ADMINS:
+        return
+    if not context.args:
+        await update.message.reply_text("Usage: /unban <user_id>")
+        return
+    try:
+        uid = int(context.args[0])
+    except ValueError:
+        await update.message.reply_text("Invalid user ID.")
+        return
+    await db.set_ban(uid, False)
+    await update.message.reply_text(f"✅ User {uid} unbanned.")
+
+async def premium(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """منح بريميوم."""
+    if update.effective_user.id not in ADMINS:
+        return
+    if not context.args:
+        await update.message.reply_text("Usage: /premium <user_id>")
+        return
+    try:
+        uid = int(context.args[0])
+    except ValueError:
+        await update.message.reply_text("Invalid user ID.")
+        return
+    await db.set_premium(uid, True)
+    await update.message.reply_text(f"💎 User {uid} now premium.")
+
+async def unpremium(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """إزالة بريميوم."""
+    if update.effective_user.id not in ADMINS:
+        return
+    if not context.args:
+        await update.message.reply_text("Usage: /unpremium <user_id>")
+        return
+    try:
+        uid = int(context.args[0])
+    except ValueError:
+        await update.message.reply_text("Invalid user ID.")
+        return
+    await db.set_premium(uid, False)
+    await update.message.reply_text(f"💔 User {uid} no longer premium.")
+
+async def maintenance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """تفعيل/إيقاف وضع الصيانة."""
+    global MAINTENANCE_MODE
+    if update.effective_user.id not in ADMINS:
+        return
+    if not context.args or context.args[0].lower() not in ('on', 'off'):
+        await update.message.reply_text("Usage: /maintenance on|off")
+        return
+    new_state = context.args[0].lower() == 'on'
+    MAINTENANCE_MODE = new_state
+    await update.message.reply_text(f"🛠️ Maintenance mode {'enabled' if new_state else 'disabled'}.")
+
+async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """عرض القنوات الإجبارية الحالية."""
+    if update.effective_user.id not in ADMINS:
+        return
+    
+    from subscription import REQUIRED_CHANNELS
+    
+    text = "*📢 القنوات الإجبارية:*\n\n"
+    for i, ch in enumerate(REQUIRED_CHANNELS, 1):
+        text += f"{i}. {ch['name']} - {ch['username']}\n"
+    
+    text += "\nلتعديل القنوات، عدل ملف `subscription.py`"
+    
+    await update.message.reply_text(text, parse_mode="Markdown")
+
+# -------------------------------
+# Handler registration
+# -------------------------------
+def register_handlers(app):
+    """تسجيل جميع المعالجات."""
+    # الأوامر الأساسية
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("stats", stats))
+    app.add_handler(CommandHandler("settings", settings))
+    
+    # أوامر الأدمن
+    app.add_handler(CommandHandler("admin", admin_panel))
+    app.add_handler(CommandHandler("broadcast", broadcast))
+    app.add_handler(CommandHandler("ban", ban))
+    app.add_handler(CommandHandler("unban", unban))
+    app.add_handler(CommandHandler("premium", premium))
+    app.add_handler(CommandHandler("unpremium", unpremium))
+    app.add_handler(CommandHandler("maintenance", maintenance_cmd))
+    app.add_handler(CommandHandler("channels", list_channels))
+    
+    # معالج callback للاشتراك
+    app.add_handler(CallbackQueryHandler(check_subscription_callback, pattern="^check_subscription$"))
+    
+    # معالج الرسائل
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
