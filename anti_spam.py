@@ -7,17 +7,19 @@ from collections import defaultdict
 from typing import Dict, List
 import logging
 
+from config import RATE_LIMIT_MAX, RATE_LIMIT_WINDOW
+
 logger = logging.getLogger(__name__)
 
 class RateLimiter:
-    def __init__(self, max_requests: int = 5, window: float = 60.0):
-        self.max_requests = max_requests
-        self.window = window
+    def __init__(self, max_requests: int = None, window: float = None):
+        self.max_requests = max_requests or RATE_LIMIT_MAX
+        self.window = window or RATE_LIMIT_WINDOW
         self._user_requests: Dict[int, List[float]] = defaultdict(list)
 
     def is_allowed(self, user_id: int) -> bool:
+        """Check if user is allowed to make a request."""
         now = time.time()
-        # Clean old entries
         self._user_requests[user_id] = [
             ts for ts in self._user_requests[user_id] if now - ts < self.window
         ]
@@ -34,5 +36,13 @@ class RateLimiter:
             if not self._user_requests[uid]:
                 del self._user_requests[uid]
 
-# Create a global instance (can be configured later)
+    def get_remaining(self, user_id: int) -> int:
+        """Get remaining requests for user in current window."""
+        now = time.time()
+        self._user_requests[user_id] = [
+            ts for ts in self._user_requests[user_id] if now - ts < self.window
+        ]
+        return max(0, self.max_requests - len(self._user_requests[user_id]))
+
+# Create a global instance
 rate_limiter = RateLimiter()
