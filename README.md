@@ -1,30 +1,50 @@
 # Instagram Media Downloader Telegram Bot
 
-A production-grade Telegram bot that downloads public Instagram content (Reels, Videos, Photos, Carousels) in the highest available quality and sends them as files (original quality, no recompression).
+A production-grade Telegram bot that downloads public Instagram content with mandatory channel subscription.
 
 ## Features
 
-- 🎯 **Auto-detection** – recognizes single photos, videos, and carousels.
-- 🚀 **High quality** – downloads best video+audio stream or highest‑resolution image.
-- 📁 **Original files** – media is sent as Telegram documents, preserving original quality.
-- 📊 **User statistics** – per‑user download count, daily limits, premium subscriptions.
-- 🛡️ **Rate limiting** – prevents spam and abuse.
-- 👑 **Admin panel** – broadcast, ban/unban, manage premium, maintenance mode.
-- ⚡ **Concurrent downloads** – powered by asyncio.
-- 🧹 **Auto cleanup** – temporary files are deleted after upload.
-- 📦 **SQLite database** – persistent user stats and premium flags.
-- 🔧 **Configurable via `.env`** – tokens, limits, cookies file.
+- 🎯 Auto-detection of Reels, Videos, Photos, Carousels
+- 🔒 Mandatory channel subscription (@BEXO50)
+- 🚀 High quality downloads
+- 📁 Original files (no recompression)
+- 📊 User statistics & limits
+- 🛡️ Rate limiting & anti-spam
+- 👑 Admin panel
+- ⚡ Async concurrent downloads
+- 🧹 Auto cleanup
 
-## Prerequisites
+## Quick Deploy on Railway
 
-- Python 3.12 or newer
-- `ffmpeg` (required by yt‑dlp for merging video+audio; available on Linux, Termux, etc.)
-- Telegram Bot Token (obtain from [@BotFather](https://t.me/BotFather))
+1. Fork this repository
+2. Connect to Railway
+3. Set environment variables:
+   - `BOT_TOKEN`
+   - `ADMINS`
+4. Deploy
 
-## Installation
+## Required Channels
 
-### 1. Clone the repository
+Users must subscribe to:
+- [@BEXO50](https://t.me/BEXO50)
 
-```bash
-git clone https://github.com/yourusername/instagram_bot.git
-cd instagram_bot
+Edit `subscription.py` to add/remove channels.
+
+## Admin Commands
+
+| Command | Description |
+|---------|-------------|
+| `/admin` | Admin panel |
+| `/broadcast <msg>` | Message all users |
+| `/ban <user_id>` | Ban user |
+| `/unban <user_id>` | Unban user |
+| `/premium <user_id>` | Grant premium |
+| `/unpremium <user_id>` | Remove premium |
+| `/maintenance on/off` | Toggle maintenance |
+| `/channels` | List required channels |
+
+## Requirements
+
+- Python 3.12+
+- ffmpeg
+- Telegram Bot Token
