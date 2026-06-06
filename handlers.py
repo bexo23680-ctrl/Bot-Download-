@@ -66,7 +66,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "أرسل لي رابط انستغرام عام (ريلز،فيديوهات) وسأقوم بتحميله بأعلى جودة.\n\n"
         "📋 *الأوامر المتاحة:*\n"
         "/start – بدء البوت\n"
-        
+        "/help – تعليمات المساعدة\n"
         "/stats – إحصائيات استخدامك\n"
         "/settings – معلومات الاشتراك\n\n"
         "💡 *مثال:* أرسل رابط مثل:\n"
@@ -160,6 +160,7 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "• تحميل غير محدود\n"
             "• أولوية في المعالجة\n"
             "• دعم فني مباشر"
+            "@PNGO1",
         )
     
     await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
