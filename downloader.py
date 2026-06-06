@@ -32,7 +32,7 @@ class Downloader:
                 'no_warnings': True,
                 'extract_flat': False,
                 'cookiefile': self.cookies_file,
-                'noplaylist': False,  # we want to see if playlist exists
+                'noplaylist': False,
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -45,7 +45,6 @@ class Downloader:
         """Determine media type and return simplified dict."""
         entries = info.get('entries')
         if entries:
-            # It's a carousel (playlist)
             return {
                 'type': 'carousel',
                 'title': info.get('title', 'Instagram carousel'),
@@ -53,7 +52,6 @@ class Downloader:
                 'count': len(entries),
             }
         else:
-            # Single post
             ext = info.get('ext', '')
             if ext in ('mp4', 'webm', 'mkv'):
                 media_type = 'video'
@@ -82,38 +80,23 @@ class Downloader:
         os.makedirs(output_dir, exist_ok=True)
         outtmpl = os.path.join(output_dir, '%(title).100s_%(id)s.%(ext)s')
 
-        # list to collect downloaded files
-        downloaded_files: List[str] = []
-
-        def progress_hook(d):
-            if d['status'] == 'downloading':
-                percent_str = d.get('_percent_str', '0%').strip('%')
-                try:
-                    percent = float(percent_str)
-                except ValueError:
-                    percent = 0.0
-                speed = d.get('_speed_str', 'N/A')
-                # Schedule async callback
-                asyncio.run_coroutine_threadsafe(
-                    progress_callback(percent, speed), loop
-                )
-            elif d['status'] == 'finished':
-                filepath = d.get('filename')
-                if filepath:
-                    downloaded_files.append(filepath)
-
         ydl_opts = {
             'format': 'bestvideo+bestaudio/best',
             'outtmpl': outtmpl,
             'quiet': True,
             'no_warnings': True,
-            'progress_hooks': [progress_hook],
+            'progress_hooks': [lambda d: self._progress_hook(d, progress_callback, loop)],
             'cookiefile': self.cookies_file,
-            'noplaylist': False,       # allow carousels
+            'noplaylist': False,
             'ignoreerrors': False,
             'retries': 5,
             'fragment_retries': 5,
             'extractor_retries': 3,
+            'merge_output_format': 'mp4',
+            'postprocessors': [{
+                'key': 'FFmpegVideoConvertor',
+                'preferedformat': 'mp4',
+            }],
         }
 
         try:
@@ -124,16 +107,37 @@ class Downloader:
             await loop.run_in_executor(None, sync_download)
         except Exception as e:
             logger.error(f"Download failed: {e}")
-            # clean up partially downloaded files
             self._clean_dir(output_dir)
             raise
 
-        # If nothing downloaded (possible error), raise
-        if not downloaded_files:
+        # جمع الملفات النهائية من المجلد
+        final_files = []
+        if os.path.exists(output_dir):
+            for file in os.listdir(output_dir):
+                filepath = os.path.join(output_dir, file)
+                if os.path.isfile(filepath):
+                    # تجاهل الملفات المؤقتة
+                    if not file.endswith(('.part', '.ytdl')):
+                        if 'fdash' not in file and 'fvideo' not in file and 'faudio' not in file:
+                            final_files.append(filepath)
+
+        if not final_files:
             self._clean_dir(output_dir)
             raise RuntimeError("No files were downloaded")
 
-        return downloaded_files
+        logger.info(f"Downloaded {len(final_files)} files")
+        return final_files
+
+    def _progress_hook(self, d: dict, callback: Callable, loop: asyncio.AbstractEventLoop):
+        """Progress hook for yt-dlp."""
+        if d['status'] == 'downloading':
+            percent_str = d.get('_percent_str', '0%').strip('%')
+            try:
+                percent = float(percent_str)
+            except ValueError:
+                percent = 0.0
+            speed = d.get('_speed_str', 'N/A')
+            asyncio.run_coroutine_threadsafe(callback(percent, speed), loop)
 
     def _clean_dir(self, path: str):
         """Remove directory and its contents."""
