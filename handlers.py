@@ -95,6 +95,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"💎 *البريميوم:* تحميل غير محدود يومياً\n"
         f"🆓 *المجاني:* {DAILY_LIMIT_NON_PREMIUM} تحميلات يومياً\n\n"
         "📞 للدعم أو الترقية، تواصل مع الأدمن.",
+        "@PNGO1",
         parse_mode=ParseMode.MARKDOWN
     )
 
@@ -257,7 +258,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📝 *الروابط المدعومة:*\n"
             "• `https://www.instagram.com/p/...`\n"
             "• `https://www.instagram.com/reel/...`\n"
-            "• `https://www.instagram.com/tv/...`\n\n"
             "تأكد أن الرابط لمنشور *عام* وليس خاص.",
             parse_mode=ParseMode.MARKDOWN
         )
@@ -282,6 +282,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "🚫 *أنت محظور من استخدام البوت*\n\n"
             "إذا كنت تعتقد أن هذا خطأ، تواصل مع الأدمن.",
+            "@PNGO1",
             parse_mode=ParseMode.MARKDOWN
         )
         return
@@ -296,7 +297,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"لقد استخدمت {DAILY_LIMIT_NON_PREMIUM}/{DAILY_LIMIT_NON_PREMIUM} تحميلات اليوم.\n\n"
                 f"💎 *للحصول على تحميل غير محدود:*\n"
                 f"• تواصل مع الأدمن للترقية\n"
-                f"• استخدم /settings للمزيد من المعلومات",
+               "@PNGO1", 
+                
                 parse_mode=ParseMode.MARKDOWN
             )
             return
