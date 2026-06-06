@@ -41,7 +41,7 @@ async def periodic_cleanup():
     """Periodically clean rate limiter memory."""
     while True:
         try:
-            await asyncio.sleep(300)  # every 5 minutes
+            await asyncio.sleep(300)
             rate_limiter.clean_old(max_age=600)
             logger.debug("Rate limiter cleanup completed")
         except asyncio.CancelledError:
@@ -57,7 +57,6 @@ async def shutdown(signal=None):
     
     logger.info(f"Shutting down... (signal: {signal})")
     
-    # Cancel cleanup task
     if cleanup_task and not cleanup_task.done():
         cleanup_task.cancel()
         try:
@@ -65,7 +64,6 @@ async def shutdown(signal=None):
         except asyncio.CancelledError:
             pass
     
-    # Stop bot polling
     if app:
         try:
             if app.running:
@@ -74,7 +72,6 @@ async def shutdown(signal=None):
         except Exception as e:
             logger.warning(f"Error stopping bot: {e}")
     
-    # Close database
     if db:
         await db.close()
     
@@ -123,7 +120,6 @@ async def main():
                 sig, lambda s=sig: asyncio.create_task(shutdown(s))
             )
         except NotImplementedError:
-            # Windows doesn't support add_signal_handler
             pass
 
     logger.info("=" * 50)
@@ -131,14 +127,12 @@ async def main():
     logger.info("=" * 50)
 
     try:
-        # Start polling
         await app.initialize()
         await app.start()
         await app.updater.start_polling(allowed_updates=["message", "callback_query"])
         
-        # Keep running until stopped
         while True:
-            await asyncio.sleep(3600)  # Sleep for 1 hour intervals
+            await asyncio.sleep(3600)
             
     except asyncio.CancelledError:
         logger.info("Main task cancelled")
@@ -150,7 +144,6 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        # Run the main function
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("Bot stopped by user (KeyboardInterrupt)")
