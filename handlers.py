@@ -63,12 +63,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # المستخدم مشترك - ترحيب
     await update.message.reply_text(
         "👋 *مرحباً بك في بوت تحميل محتوى انستغرام!*\n\n"
-        "أرسل لي رابط انستغرام عام (ريلز،فيديوهات) وسأقوم بتحميله بأعلى جودة.\n\n"
+        "أرسل لي رابط انستغرام عام (ريلز، فيديوهات، صور، البومات) وسأقوم بتحميله بأعلى جودة.\n\n"
         "📋 *الأوامر المتاحة:*\n"
         "/start – بدء البوت\n"
         "/help – تعليمات المساعدة\n"
         "/stats – إحصائيات استخدامك\n"
-        "/settings – معلومات الاشتراك\n\n"
+        "/settings – معلومات الاشتراك\n"
+        "/admin_info – معلومات الأدمن\n\n"
         "💡 *مثال:* أرسل رابط مثل:\n"
         "`https://www.instagram.com/reel/XXXXX/`",
         parse_mode=ParseMode.MARKDOWN
@@ -94,8 +95,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• الروابط المدعومة: `/p/` , `/reel/` , `/tv/`\n\n"
         f"💎 *البريميوم:* تحميل غير محدود يومياً\n"
         f"🆓 *المجاني:* {DAILY_LIMIT_NON_PREMIUM} تحميلات يومياً\n\n"
-        "📞 للدعم أو الترقية، تواصل مع الأدمن.",
-        "@PNGO1",
+        "📞 للدعم أو الترقية، تواصل مع الأدمن:\n"
+        "@pngo1",
         parse_mode=ParseMode.MARKDOWN
     )
 
@@ -125,7 +126,8 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"📥 إجمالي التحميلات: {total}\n"
         f"📅 تحميلات اليوم: {daily}/{limit}\n"
         f"💎 البريميوم: {premium}\n\n"
-        f"⚙️ استخدم /settings لإدارة الاشتراك.",
+        f"⚙️ استخدم /settings لإدارة الاشتراك.\n"
+        f"📞 للترقية: @pngo1",
         parse_mode=ParseMode.MARKDOWN
     )
 
@@ -148,7 +150,8 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "⚙️ *الإعدادات*\n\n"
             "💎 *حالتك:* بريميوم ✅\n"
             "📥 التحميل: غير محدود\n"
-            "⭐ أنت مشترك مميز!"
+            "⭐ أنت مشترك مميز!\n\n"
+            "📞 للأستفسار: @pngo1"
         )
     else:
         text = (
@@ -156,14 +159,29 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🆓 *حالتك:* مجاني\n"
             f"📥 الحد اليومي: {DAILY_LIMIT_NON_PREMIUM} تحميلات\n\n"
             "💎 *للترقية إلى بريميوم:*\n"
-            "تواصل مع الأدمن للحصول على:\n"
+            "تواصل مع الأدمن:\n"
+            "@pngo1\n\n"
+            "المميزات:\n"
             "• تحميل غير محدود\n"
             "• أولوية في المعالجة\n"
             "• دعم فني مباشر"
-            "@PNGO1",
         )
     
     await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
+
+async def admin_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """عرض معلومات الأدمن للتواصل."""
+    await update.message.reply_text(
+        "📞 *معلومات التواصل*\n\n"
+        "👤 *الأدمن:* @pngo1\n\n"
+        "للاستفسارات:\n"
+        "• طلب الترقية إلى بريميوم\n"
+        "• الدعم الفني\n"
+        "• الإبلاغ عن مشاكل\n"
+        "• الاقتراحات\n\n"
+        "💬 تواصل مع الأدمن مباشرة عبر المعرف أعلاه.",
+        parse_mode=ParseMode.MARKDOWN
+    )
 
 # -------------------------------
 # معالج أزرار الاشتراك
@@ -259,6 +277,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📝 *الروابط المدعومة:*\n"
             "• `https://www.instagram.com/p/...`\n"
             "• `https://www.instagram.com/reel/...`\n"
+            "• `https://www.instagram.com/tv/...`\n\n"
             "تأكد أن الرابط لمنشور *عام* وليس خاص.",
             parse_mode=ParseMode.MARKDOWN
         )
@@ -270,7 +289,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"⏳ *طلبات كثيرة جداً!*\n\n"
             f"يرجى الانتظار {wait} ثانية قبل المحاولة مجدداً.\n"
-            f"💎 المستخدمين المميزين لديهم أولوية أعلى.",
+            f"💎 المستخدمين المميزين لديهم أولوية أعلى.\n"
+            f"📞 للترقية: @pngo1",
             parse_mode=ParseMode.MARKDOWN
         )
         return
@@ -282,8 +302,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await db.is_banned(user_id):
         await update.message.reply_text(
             "🚫 *أنت محظور من استخدام البوت*\n\n"
-            "إذا كنت تعتقد أن هذا خطأ، تواصل مع الأدمن.",
-            "@PNGO1",
+            "إذا كنت تعتقد أن هذا خطأ، تواصل مع الأدمن:\n"
+            "@pngo1",
             parse_mode=ParseMode.MARKDOWN
         )
         return
@@ -297,9 +317,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"⛔ *وصلت للحد اليومي!*\n\n"
                 f"لقد استخدمت {DAILY_LIMIT_NON_PREMIUM}/{DAILY_LIMIT_NON_PREMIUM} تحميلات اليوم.\n\n"
                 f"💎 *للحصول على تحميل غير محدود:*\n"
-                f"• تواصل مع الأدمن للترقية\n"
-               "@PNGO1", 
-                
+                f"• تواصل مع الأدمن: @pngo1\n"
+                f"• استخدم /settings للمزيد من المعلومات",
                 parse_mode=ParseMode.MARKDOWN
             )
             return
@@ -389,7 +408,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if sent_count == 0:
             await status_msg.edit_text(
                 "❌ *فشل إرسال الملفات*\n"
-                "يرجى المحاولة مرة أخرى.",
+                "يرجى المحاولة مرة أخرى.\n"
+                "📞 للدعم: @pngo1",
                 parse_mode=ParseMode.MARKDOWN
             )
         else:
@@ -415,7 +435,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"• الرابط صحيح وعام\n"
             f"• المنشور غير محذوف\n"
             f"• الحساب ليس خاصاً\n\n"
-            f"🔄 حاول مرة أخرى أو تواصل مع الدعم.",
+            f"🔄 حاول مرة أخرى أو تواصل مع الدعم:\n"
+            f"@pngo1",
             parse_mode=ParseMode.MARKDOWN
         )
     finally:
@@ -436,12 +457,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """لوحة تحكم الأدمن."""
     if update.effective_user.id not in ADMINS:
-        await update.message.reply_text("⛔ *للمشرفين فقط*", parse_mode=ParseMode.MARKDOWN)
+        await update.message.reply_text(
+            "⛔ *للمشرفين فقط*\n\n"
+            "إذا كنت تعتقد أن هذا خطأ، تواصل مع:\n"
+            "@pngo1",
+            parse_mode=ParseMode.MARKDOWN
+        )
         return
 
     total_users, premium_users, total_downloads = await db.get_stats()
     await update.message.reply_text(
         f"👑 *لوحة تحكم الأدمن*\n\n"
+        f"👤 الأدمن: @pngo1\n\n"
         f"👥 إجمالي المستخدمين: {total_users}\n"
         f"💎 المشتركين المميزين: {premium_users}\n"
         f"📥 إجمالي التحميلات: {total_downloads}\n\n"
@@ -486,7 +513,11 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     failed = 0
     for (uid,) in users:
         try:
-            await context.bot.send_message(chat_id=uid, text=f"📢 *رسالة من الإدارة:*\n\n{msg}", parse_mode=ParseMode.MARKDOWN)
+            await context.bot.send_message(
+                chat_id=uid,
+                text=f"📢 *رسالة من الإدارة:*\n\n{msg}\n\n📞 للتواصل: @pngo1",
+                parse_mode=ParseMode.MARKDOWN
+            )
             count += 1
             await asyncio.sleep(0.05)
         except Exception as e:
@@ -516,7 +547,11 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     await db.set_ban(uid, True)
-    await update.message.reply_text(f"🚫 *تم حظر المستخدم:* `{uid}`", parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(
+        f"🚫 *تم حظر المستخدم:* `{uid}`\n\n"
+        f"للمراجعة: @pngo1",
+        parse_mode=ParseMode.MARKDOWN
+    )
 
 async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """فك حظر مستخدم."""
@@ -534,7 +569,11 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     await db.set_ban(uid, False)
-    await update.message.reply_text(f"✅ *تم فك الحظر:* `{uid}`", parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(
+        f"✅ *تم فك الحظر:* `{uid}`\n\n"
+        f"للمراجعة: @pngo1",
+        parse_mode=ParseMode.MARKDOWN
+    )
 
 async def premium(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """منح بريميوم."""
@@ -557,13 +596,22 @@ async def premium(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.bot.send_message(
             chat_id=uid,
-            text="🎉 *تهانينا!*\n\nتمت ترقيتك إلى *بريميوم*.\nالآن يمكنك التحميل بدون حدود يومية.",
+            text=(
+                "🎉 *تهانينا!*\n\n"
+                "تمت ترقيتك إلى *بريميوم*.\n"
+                "الآن يمكنك التحميل بدون حدود يومية.\n\n"
+                "📞 للدعم: @pngo1"
+            ),
             parse_mode=ParseMode.MARKDOWN
         )
     except:
         pass
     
-    await update.message.reply_text(f"💎 *تم منح بريميوم:* `{uid}`", parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(
+        f"💎 *تم منح بريميوم:* `{uid}`\n\n"
+        f"تم إشعار المستخدم.",
+        parse_mode=ParseMode.MARKDOWN
+    )
 
 async def unpremium(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """إزالة بريميوم."""
@@ -581,7 +629,10 @@ async def unpremium(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     await db.set_premium(uid, False)
-    await update.message.reply_text(f"💔 *تم إزالة بريميوم:* `{uid}`", parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(
+        f"💔 *تم إزالة بريميوم:* `{uid}`",
+        parse_mode=ParseMode.MARKDOWN
+    )
 
 async def maintenance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """تفعيل/إيقاف وضع الصيانة."""
@@ -604,13 +655,15 @@ async def maintenance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "🛠️ *تم تفعيل وضع الصيانة*\n\n"
             "• المستخدمون العاديون: لن يستطيعوا استخدام البوت\n"
-            "• المشرفون: يمكنهم استخدام البوت",
+            "• المشرفون: يمكنهم استخدام البوت\n\n"
+            "👤 الأدمن: @pngo1",
             parse_mode=ParseMode.MARKDOWN
         )
     else:
         await update.message.reply_text(
             "✅ *تم إيقاف وضع الصيانة*\n"
-            "عاد البوت للعمل بشكل طبيعي.",
+            "عاد البوت للعمل بشكل طبيعي.\n\n"
+            "👤 الأدمن: @pngo1",
             parse_mode=ParseMode.MARKDOWN
         )
 
@@ -640,6 +693,7 @@ def register_handlers(app):
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("stats", stats))
     app.add_handler(CommandHandler("settings", settings))
+    app.add_handler(CommandHandler("admin_info", admin_info))
     
     # أوامر الأدمن
     app.add_handler(CommandHandler("admin", admin_panel))
