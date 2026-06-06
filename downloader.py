@@ -110,13 +110,12 @@ class Downloader:
             self._clean_dir(output_dir)
             raise
 
-        # جمع الملفات النهائية من المجلد
+        # Collect final files from directory
         final_files = []
         if os.path.exists(output_dir):
             for file in os.listdir(output_dir):
                 filepath = os.path.join(output_dir, file)
                 if os.path.isfile(filepath):
-                    # تجاهل الملفات المؤقتة
                     if not file.endswith(('.part', '.ytdl')):
                         if 'fdash' not in file and 'fvideo' not in file and 'faudio' not in file:
                             final_files.append(filepath)
