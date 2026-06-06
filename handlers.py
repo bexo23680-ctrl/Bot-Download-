@@ -60,9 +60,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # المستخدم مشترك - ترحيب عادي
     await update.message.reply_text(
-        "👋 *Welcome to Instagram Media Downloader!*\n\n"
-        "Send me a public Instagram URL (Reels, Videos, Photos, Carousels) and I'll download it in the highest quality.\n\n"
-        "Commands:\n/start – Start\n/help – Help\n/stats – Your usage statistics\n/settings – Subscription info",
+        
+        "اهلا بك عزيزي 🪄☺️",
+        "قم بارسال رابط من الانستغرام",
+        "وسوف يتم تحميل بجوده عالية" ,
+        "اضغط /start لتجديد البوت" ,
         parse_mode=ParseMode.MARKDOWN
     )
 
@@ -91,7 +93,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """عرض إحصائيات المستخدم."""
     user = update.effective_user
-    user_id = user.id
+    ser_id = user.id
     
     # فحص الاشتراك
     is_subscribed, unsubscribed = await check_user_subscription(context.bot, user_id)
