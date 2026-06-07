@@ -95,13 +95,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     logger.info(f"✅ Start command from user: {user_id}")
     
-    # إضافة المستخدم لقاعدة البيانات
     try:
         await db.add_or_update_user(user_id, user.username or "", user.first_name or "", user.last_name or "")
     except Exception as e:
         logger.error(f"Error adding user: {e}")
     
-    # رسالة الترحيب مع الأزرار
     await update.message.reply_text(
         "👋 *مرحباً بك في بوت تحميل انستغرام!*\n\n"
         "✨ *المميزات:*\n"
@@ -120,7 +118,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # -------------------------------
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """معالج جميع الأزرار"""
-    global MAINTENANCE_MODE  # ✅ تم نقلها إلى بداية الدالة
+    global MAINTENANCE_MODE
     
     query = update.callback_query
     user_id = query.from_user.id
@@ -133,10 +131,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "my_stats":
         user_data = await db.get_user(user_id)
         if not user_data:
-            await query.message.edit_text(
-                "📭 لا توجد بيانات بعد. أرسل رابطاً أولاً!",
-                reply_markup=get_back_keyboard()
-            )
+            await query.message.edit_text("📭 لا توجد بيانات بعد. أرسل رابطاً أولاً!", reply_markup=get_back_keyboard())
             return
         
         total = user_data['total_downloads']
@@ -145,10 +140,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         limit = "∞ غير محدود" if user_data['is_premium'] else str(DAILY_LIMIT_NON_PREMIUM)
         
         await query.message.edit_text(
-            f"📊 *إحصائياتك*\n\n"
-            f"📥 إجمالي التحميلات: {total}\n"
-            f"📅 تحميلات اليوم: {daily}/{limit}\n"
-            f"💎 البريميوم: {premium}",
+            f"📊 *إحصائياتك*\n\n📥 إجمالي التحميلات: {total}\n📅 تحميلات اليوم: {daily}/{limit}\n💎 البريميوم: {premium}",
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=get_back_keyboard()
         )
@@ -160,48 +152,27 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if premium:
             text = "⚙️ *الإعدادات*\n\n💎 *حالتك:* بريميوم ✅\n📥 التحميل: غير محدود\n⭐ أنت مشترك مميز!"
         else:
-            text = (
-                "⚙️ *الإعدادات*\n\n"
-                "🆓 *حالتك:* مجاني\n"
-                f"📥 الحد اليومي: {DAILY_LIMIT_NON_PREMIUM} تحميلات\n\n"
-                "💎 *للترقية:* تواصل مع @pngo1"
-            )
+            text = f"⚙️ *الإعدادات*\n\n🆓 *حالتك:* مجاني\n📥 الحد اليومي: {DAILY_LIMIT_NON_PREMIUM} تحميلات\n\n💎 *للترقية:* تواصل مع @pngo1"
         
         await query.message.edit_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=get_back_keyboard())
     
     elif data == "help":
         await query.message.edit_text(
-            "📘 *كيفية استخدام البوت:*\n\n"
-            "1️⃣ انسخ رابط منشور انستغرام عام\n"
-            "2️⃣ أرسل الرابط إلى البوت\n"
-            "3️⃣ انتظر حتى يتم التحميل والإرسال\n\n"
-            f"💎 البريميوم: تحميل غير محدود\n"
-            f"🆓 المجاني: {DAILY_LIMIT_NON_PREMIUM} تحميلات يومياً\n\n"
-            "📞 للدعم: @pngo1",
+            f"📘 *كيفية استخدام البوت:*\n\n1️⃣ انسخ رابط منشور انستغرام عام\n2️⃣ أرسل الرابط إلى البوت\n3️⃣ انتظر حتى يتم التحميل والإرسال\n\n💎 البريميوم: تحميل غير محدود\n🆓 المجاني: {DAILY_LIMIT_NON_PREMIUM} تحميلات يومياً\n\n📞 للدعم: @pngo1",
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=get_back_keyboard()
         )
     
     elif data == "admin_info":
         await query.message.edit_text(
-            "📞 *معلومات التواصل*\n\n"
-            "👤 *الأدمن:* @pngo1\n\n"
-            "للاستفسارات:\n"
-            "• طلب الترقية إلى بريميوم\n"
-            "• الدعم الفني\n"
-            "• الإبلاغ عن مشاكل",
+            "📞 *معلومات التواصل*\n\n👤 *الأدمن:* @pngo1\n\nللاستفسارات:\n• طلب الترقية إلى بريميوم\n• الدعم الفني\n• الإبلاغ عن مشاكل",
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=get_back_keyboard()
         )
     
     elif data == "upgrade_premium":
         await query.message.edit_text(
-            "💎 *الترقية إلى بريميوم*\n\n"
-            "مميزات البريميوم:\n"
-            "✅ تحميل غير محدود يومياً\n"
-            "✅ أولوية في المعالجة\n"
-            "✅ دعم فني مباشر\n\n"
-            "📞 *للترقية:* تواصل مع @pngo1",
+            "💎 *الترقية إلى بريميوم*\n\nمميزات البريميوم:\n✅ تحميل غير محدود يومياً\n✅ أولوية في المعالجة\n✅ دعم فني مباشر\n\n📞 *للترقية:* تواصل مع @pngo1",
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=get_back_keyboard()
         )
@@ -240,10 +211,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         total_users, premium_users, total_downloads = await db.get_stats()
         await query.message.edit_text(
-            f"📊 *إحصائيات البوت*\n\n"
-            f"👥 المستخدمين: {total_users}\n"
-            f"💎 المميزين: {premium_users}\n"
-            f"📥 التحميلات: {total_downloads}",
+            f"📊 *إحصائيات البوت*\n\n👥 المستخدمين: {total_users}\n💎 المميزين: {premium_users}\n📥 التحميلات: {total_downloads}",
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=get_back_keyboard()
         )
@@ -260,22 +228,14 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "maintenance_on":
         if user_id not in ADMINS:
             return
-        MAINTENANCE_MODE = True  # ✅ بدون global لأنها في بداية الدالة
-        await query.message.edit_text(
-            "🛠️ *تم تفعيل وضع الصيانة*",
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=get_back_keyboard()
-        )
+        MAINTENANCE_MODE = True
+        await query.message.edit_text("🛠️ *تم تفعيل وضع الصيانة*", parse_mode=ParseMode.MARKDOWN, reply_markup=get_back_keyboard())
     
     elif data == "maintenance_off":
         if user_id not in ADMINS:
             return
-        MAINTENANCE_MODE = False  # ✅ بدون global لأنها في بداية الدالة
-        await query.message.edit_text(
-            "✅ *تم إيقاف وضع الصيانة*",
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=get_back_keyboard()
-        )
+        MAINTENANCE_MODE = False
+        await query.message.edit_text("✅ *تم إيقاف وضع الصيانة*", parse_mode=ParseMode.MARKDOWN, reply_markup=get_back_keyboard())
     
     elif data in ["admin_ban", "admin_unban", "admin_add_premium", "admin_remove_premium"]:
         if user_id not in ADMINS:
@@ -290,10 +250,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         action, text = action_map[data]
         context.user_data['admin_action'] = action
-        
-        await query.message.edit_text(
-            text, parse_mode=ParseMode.MARKDOWN, reply_markup=get_cancel_keyboard()
-        )
+        await query.message.edit_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=get_cancel_keyboard())
     
     elif data == "admin_broadcast":
         if user_id not in ADMINS:
@@ -301,16 +258,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['admin_action'] = 'broadcast'
         await query.message.edit_text(
             "📢 *إرسال إشعار للجميع*\n\nأرسل الرسالة التي تريد إرسالها:",
-            parse_mode=ParseMode.MARKDOWN, reply_markup=get_cancel_keyboard()
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=get_cancel_keyboard()
         )
     
     elif data == "cancel":
         context.user_data.pop('admin_action', None)
-        await query.message.edit_text(
-            "❌ *تم الإلغاء*",
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=get_back_keyboard()
-        )
+        await query.message.edit_text("❌ *تم الإلغاء*", parse_mode=ParseMode.MARKDOWN, reply_markup=get_back_keyboard())
 
 # -------------------------------
 # معالج النصوص الإدارية
@@ -405,11 +359,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # فحص الرابط
     if not is_valid_instagram_url(text):
         await update.message.reply_text(
-            "❌ *رابط غير صالح!*\n\n"
-            "📝 *الروابط المدعومة:*\n"
-            "• `https://www.instagram.com/p/...`\n"
-            "• `https://www.instagram.com/reel/...`\n"
-            "• `https://www.instagram.com/tv/...`",
+            "❌ *رابط غير صالح!*\n\n📝 *الروابط المدعومة:*\n• `https://www.instagram.com/p/...`\n• `https://www.instagram.com/reel/...`\n• `https://www.instagram.com/tv/...`",
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=get_main_keyboard(user_id)
         )
@@ -434,8 +384,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         daily = await db.get_daily_count(user_id)
         if daily >= DAILY_LIMIT_NON_PREMIUM:
             await update.message.reply_text(
-                f"⛔ *وصلت للحد اليومي!*\n\n"
-                f"💎 للترقية: @pngo1",
+                "⛔ *وصلت للحد اليومي!*\n\n💎 للترقية: @pngo1",
                 parse_mode=ParseMode.MARKDOWN,
                 reply_markup=get_main_keyboard(user_id)
             )
@@ -457,9 +406,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         async def progress(percent: float, speed: str):
             try:
                 await status_msg.edit_text(
-                    f"📥 *جاري التحميل...*\n"
-                    f"▕{'█' * int(percent / 10)}{'░' * (10 - int(percent / 10))}▏ {percent:.1f}%\n"
-                    f"⚡ {speed}",
+                    f"📥 *جاري التحميل...*\n▕{'█' * int(percent / 10)}{'░' * (10 - int(percent / 10))}▏ {percent:.1f}%\n⚡ {speed}",
                     parse_mode=ParseMode.MARKDOWN
                 )
             except:
