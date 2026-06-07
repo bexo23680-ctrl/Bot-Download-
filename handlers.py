@@ -120,6 +120,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # -------------------------------
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """معالج جميع الأزرار"""
+    global MAINTENANCE_MODE  # ✅ تم نقلها إلى بداية الدالة
+    
     query = update.callback_query
     user_id = query.from_user.id
     data = query.data
@@ -258,15 +260,22 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "maintenance_on":
         if user_id not in ADMINS:
             return
-        global MAINTENANCE_MODE
-        MAINTENANCE_MODE = True
-        await query.message.edit_text("🛠️ *تم تفعيل وضع الصيانة*", parse_mode=ParseMode.MARKDOWN, reply_markup=get_back_keyboard())
+        MAINTENANCE_MODE = True  # ✅ بدون global لأنها في بداية الدالة
+        await query.message.edit_text(
+            "🛠️ *تم تفعيل وضع الصيانة*",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=get_back_keyboard()
+        )
     
     elif data == "maintenance_off":
         if user_id not in ADMINS:
             return
-        MAINTENANCE_MODE = False
-        await query.message.edit_text("✅ *تم إيقاف وضع الصيانة*", parse_mode=ParseMode.MARKDOWN, reply_markup=get_back_keyboard())
+        MAINTENANCE_MODE = False  # ✅ بدون global لأنها في بداية الدالة
+        await query.message.edit_text(
+            "✅ *تم إيقاف وضع الصيانة*",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=get_back_keyboard()
+        )
     
     elif data in ["admin_ban", "admin_unban", "admin_add_premium", "admin_remove_premium"]:
         if user_id not in ADMINS:
@@ -297,7 +306,11 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     elif data == "cancel":
         context.user_data.pop('admin_action', None)
-        await query.message.edit_text("❌ *تم الإلغاء*", parse_mode=ParseMode.MARKDOWN, reply_markup=get_back_keyboard())
+        await query.message.edit_text(
+            "❌ *تم الإلغاء*",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=get_back_keyboard()
+        )
 
 # -------------------------------
 # معالج النصوص الإدارية
@@ -334,7 +347,7 @@ async def handle_admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await db.set_premium(uid, True)
             await update.message.reply_text(f"✅ تم منح بريميوم لـ `{uid}`", parse_mode=ParseMode.MARKDOWN)
             try:
-                await context.bot.send_message(uid, "🎉 تمت ترقيتك إلى بريميوم! التحميل الآن غير محدود.")
+                await context.bot.send_message(uid, "🎉 تمت ترقيتك إلى بريميوم!")
             except:
                 pass
         except ValueError:
@@ -512,13 +525,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # -------------------------------
 def register_handlers(app):
     """تسجيل جميع المعالجات"""
-    # الأمر الأساسي
     app.add_handler(CommandHandler("start", start))
-    
-    # الأزرار
     app.add_handler(CallbackQueryHandler(handle_callback))
-    
-    # الرسائل النصية
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    
     logger.info("✅ Handlers registered")
