@@ -9,7 +9,7 @@ import signal
 import sys
 from pathlib import Path
 
-from telegram.ext import Application
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 
 from config import BOT_TOKEN, LOG_LEVEL
 from database import Database
@@ -103,8 +103,13 @@ async def main():
     # Build application
     try:
         app = Application.builder().token(BOT_TOKEN).build()
+        
+        # ✅ تسجيل جميع المعالجات
         register_handlers(app)
+        
         logger.info("Bot application built successfully")
+        logger.info(f"Registered handlers: {len(app.handlers)} groups")
+        
     except Exception as e:
         logger.critical(f"Failed to build application: {e}")
         await db.close()
@@ -129,8 +134,16 @@ async def main():
     try:
         await app.initialize()
         await app.start()
-        await app.updater.start_polling(allowed_updates=["message", "callback_query"])
         
+        # ✅ تشغيل polling مع جميع أنواع التحديثات
+        await app.updater.start_polling(
+            allowed_updates=["message", "callback_query", "edited_message"],
+            drop_pending_updates=True,  # تجاهل الرسائل القديمة
+        )
+        
+        logger.info("Polling started successfully!")
+        
+        # Keep running
         while True:
             await asyncio.sleep(3600)
             
