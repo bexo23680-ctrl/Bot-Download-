@@ -29,7 +29,7 @@ class RateLimiter:
         return True
 
     def clean_old(self, max_age: float = 300.0):
-        """Remove entries that haven't been seen for a while (memory cleanup)."""
+        """Remove entries that haven't been seen for a while."""
         now = time.time()
         for uid in list(self._user_requests.keys()):
             self._user_requests[uid] = [ts for ts in self._user_requests[uid] if now - ts < self.window]
@@ -44,5 +44,4 @@ class RateLimiter:
         ]
         return max(0, self.max_requests - len(self._user_requests[user_id]))
 
-# Create a global instance
 rate_limiter = RateLimiter()
