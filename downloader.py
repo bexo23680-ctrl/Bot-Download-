@@ -70,10 +70,7 @@ class Downloader:
         url: str,
         progress_callback: Callable[[float, str], None],
     ) -> List[str]:
-        """
-        Download media and return list of file paths.
-        progress_callback receives (percentage, speed_str).
-        """
+        """Download media and return list of file paths."""
         loop = asyncio.get_running_loop()
         unique_id = str(uuid.uuid4())
         output_dir = os.path.join(self.download_dir, unique_id)
@@ -110,7 +107,6 @@ class Downloader:
             self._clean_dir(output_dir)
             raise
 
-        # Collect final files from directory
         final_files = []
         if os.path.exists(output_dir):
             for file in os.listdir(output_dir):
