@@ -9,20 +9,14 @@ from telegram.error import TelegramError
 
 logger = logging.getLogger(__name__)
 
-# قائمة القنوات الإجبارية
+# قائمة القنوات الإجبارية - فارغة حالياً للتجربة
 REQUIRED_CHANNELS = [
-    {
-        'username': '@BEXO50',
-        'chat_id': '@BEXO50',
-        'name': 'قناة BEXO50',
-        'url': 'https://t.me/BEXO50',
-    },
-    # يمكنك إضافة قنوات أخرى هنا
+    # تم تعطيل الاشتراك الإجباري مؤقتاً
     # {
-    #     'username': '@CHANNEL2',
-    #     'chat_id': '@CHANNEL2',
-    #     'name': 'القناة الثانية',
-    #     'url': 'https://t.me/CHANNEL2',
+    #     'username': '@BEXO50',
+    #     'chat_id': '@BEXO50',
+    #     'name': 'قناة BEXO50',
+    #     'url': 'https://t.me/BEXO50',
     # },
 ]
 
@@ -30,10 +24,6 @@ async def check_user_subscription(bot: Bot, user_id: int) -> Tuple[bool, List[di
     """
     يتحقق من اشتراك المستخدم في جميع القنوات المطلوبة.
     
-    Args:
-        bot: تيليجرام بوت
-        user_id: معرف المستخدم
-        
     Returns:
         (is_subscribed, list_of_unsubscribed_channels)
     """
@@ -63,12 +53,6 @@ async def check_user_subscription(bot: Bot, user_id: int) -> Tuple[bool, List[di
 def get_subscription_keyboard(unsubscribed_channels: List[dict]) -> InlineKeyboardMarkup:
     """
     ينشئ أزرار للاشتراك في القنوات غير المشترك فيها.
-    
-    Args:
-        unsubscribed_channels: القنوات غير المشترك فيها
-        
-    Returns:
-        InlineKeyboardMarkup
     """
     keyboard = []
     
@@ -93,10 +77,6 @@ def get_subscription_keyboard(unsubscribed_channels: List[dict]) -> InlineKeyboa
 async def send_subscription_message(update, unsubscribed_channels: List[dict]):
     """
     يرسل رسالة تطلب من المستخدم الاشتراك في القنوات.
-    
-    Args:
-        update: تحديث تيليجرام
-        unsubscribed_channels: القنوات غير المشترك فيها
     """
     channels_list = "\n".join([
         f"• [{ch['name']}]({ch['url']})"
