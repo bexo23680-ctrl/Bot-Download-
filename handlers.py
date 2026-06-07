@@ -1,3 +1,4 @@
+# handlers.py
 """
 معالجات بوت تيليجرام مع أزرار تفاعلية - النسخة الكاملة
 """
@@ -5,7 +6,7 @@
 import asyncio
 import logging
 import os
-from typing import Optional
+from typing import Optional, Tuple, List
 from pathlib import Path
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -17,6 +18,7 @@ from database import Database
 from downloader import Downloader
 from anti_spam import rate_limiter
 from utils import is_valid_instagram_url
+from subscription import check_user_subscription, send_subscription_message, get_subscription_keyboard
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,10 @@ async def is_maintenance(user_id: int) -> bool:
     if MAINTENANCE_MODE and user_id not in ADMINS:
         return True
     return False
+
+async def is_subscribed(bot, user_id: int) -> Tuple[bool, List[dict]]:
+    """التحقق من اشتراك المستخدم في القنوات المطلوبة"""
+    return await check_user_subscription(bot, user_id)
 
 # -------------------------------
 # لوحات المفاتيح (Keyboards)
@@ -101,12 +107,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error adding user: {e}")
     
+    # التحقق من الاشتراك
+    is_subscribed, unsubscribed = await check_user_subscription(context.bot, user_id)
+    if not is_subscribed:
+        await send_subscription_message(update, unsubscribed)
+        return
+    
     # رسالة الترحيب مع الأزرار
     await update.message.reply_text(
         "👋 *مرحباً بك في بوت تحميل انستغرام!*\n\n"
         "✨ *المميزات:*\n"
         "• تحميل فيديوهات انستغرام\n"
-  
         "• جودة عالية\n\n"
         "📤 *كيفية الاستخدام:*\n"
         "أرسل رابط انستغرام وسأقوم بتحميله لك فوراً\n\n"
@@ -120,7 +131,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # -------------------------------
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """معالج جميع الأزرار"""
-    global MAINTENANCE_MODE  # ✅ تم نقلها إلى بداية الدالة
+    global MAINTENANCE_MODE
     
     query = update.callback_query
     user_id = query.from_user.id
@@ -128,9 +139,31 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await query.answer()
     
+    # ========== أزرار الاشتراك ==========
+    
+    if data == "check_subscription":
+        """التحقق من الاشتراك بعد الضغط على الزر"""
+        is_subscribed, unsubscribed = await check_user_subscription(context.bot, user_id)
+        
+        if is_subscribed:
+            await query.message.edit_text(
+                "✅ *تم التحقق من اشتراكك!*\n\n"
+                "📤 أرسل رابط انستغرام الآن للتحميل:",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=get_main_keyboard(user_id)
+            )
+        else:
+            # تحديث الرسالة الحالية بدلاً من إرسال رسالة جديدة
+            await query.message.edit_text(
+                "❌ *لم تشترك في جميع القنوات بعد*\n\n"
+                "يرجى الاشتراك ثم الضغط على التحقق مرة أخرى:",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=get_subscription_keyboard(unsubscribed)
+            )
+    
     # ========== الأزرار الرئيسية ==========
     
-    if data == "my_stats":
+    elif data == "my_stats":
         user_data = await db.get_user(user_id)
         if not user_data:
             await query.message.edit_text(
@@ -260,7 +293,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "maintenance_on":
         if user_id not in ADMINS:
             return
-        MAINTENANCE_MODE = True  # ✅ بدون global لأنها في بداية الدالة
+        MAINTENANCE_MODE = True
         await query.message.edit_text(
             "🛠️ *تم تفعيل وضع الصيانة*",
             parse_mode=ParseMode.MARKDOWN,
@@ -270,7 +303,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "maintenance_off":
         if user_id not in ADMINS:
             return
-        MAINTENANCE_MODE = False  # ✅ بدون global لأنها في بداية الدالة
+        MAINTENANCE_MODE = False
         await query.message.edit_text(
             "✅ *تم إيقاف وضع الصيانة*",
             parse_mode=ParseMode.MARKDOWN,
@@ -395,6 +428,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # إذا كان الأدمن في وضع إدخال
     if await handle_admin_text(update, context):
+        return
+
+    # ✅ التحقق من الاشتراك الإجباري (يأتي قبل أي شيء آخر)
+    is_subscribed, unsubscribed = await check_user_subscription(context.bot, user_id)
+    if not is_subscribed:
+        await send_subscription_message(update, unsubscribed)
         return
 
     # فحص الصيانة
