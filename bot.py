@@ -78,16 +78,34 @@ async def shutdown(signal=None):
     logger.info("Shutdown complete")
 
 
+async def delete_webhook():
+    """Delete any existing webhook before starting polling."""
+    temp_app = Application.builder().token(BOT_TOKEN).build()
+    await temp_app.initialize()
+    await temp_app.bot.delete_webhook(drop_pending_updates=True)
+    logger.info("Webhook deleted (if existed)")
+    await temp_app.shutdown()
+
+
 async def main():
     """Main function to run the bot."""
     global db, app, cleanup_task
     
+    logger.info("=" * 50)
     logger.info("Starting bot initialization...")
+    logger.info("=" * 50)
+    
+    # Delete webhook first
+    try:
+        await delete_webhook()
+    except Exception as e:
+        logger.warning(f"Failed to delete webhook: {e}")
     
     # Initialize database with error handling
     db = Database()
     try:
         await db.connect()
+        logger.info("Database connected successfully")
     except Exception as e:
         logger.critical(f"Failed to connect to database: {e}")
         logger.critical("Exiting - cannot operate without database")
@@ -125,7 +143,7 @@ async def main():
                 sig, lambda s=sig: asyncio.create_task(shutdown(s))
             )
         except NotImplementedError:
-            pass
+            logger.warning(f"Signal handler not supported for {sig}")
 
     logger.info("=" * 50)
     logger.info("Bot is starting polling...")
@@ -141,7 +159,8 @@ async def main():
             drop_pending_updates=True,  # تجاهل الرسائل القديمة
         )
         
-        logger.info("Polling started successfully!")
+        logger.info("✅ Polling started successfully!")
+        logger.info("✅ Bot is now running and ready to receive commands!")
         
         # Keep running
         while True:
