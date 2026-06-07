@@ -46,44 +46,43 @@ async def is_maintenance(user_id: int) -> bool:
 # معالجات الأوامر الأساسية
 # -------------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """أمر البداية مع فحص الاشتراك."""
+    """أمر البداية - نسخة مبسطة بدون اشتراك إجباري."""
     user = update.effective_user
     user_id = user.id
     
-    # إضافة المستخدم إلى قاعدة البيانات
-    await db.add_or_update_user(user_id, user.username or "", user.first_name or "", user.last_name or "")
+    logger.info(f"===== START COMMAND from user {user_id} =====")
     
-    # فحص الاشتراك أولاً
-    is_subscribed, unsubscribed = await check_user_subscription(context.bot, user_id)
-    
-    if not is_subscribed:
-        await send_subscription_message(update, unsubscribed)
-        return
-    
-    # المستخدم مشترك - ترحيب
-    await update.message.reply_text(
-        "👋 *مرحباً بك في بوت تحميل محتوى انستغرام!*\n\n"
-        "أرسل لي رابط انستغرام عام (ريلز، فيديوهات، صور، البومات) وسأقوم بتحميله بأعلى جودة.\n\n"
-        "📋 *الأوامر المتاحة:*\n"
-        "/start – بدء البوت\n"
-        "/help – تعليمات المساعدة\n"
-        "/stats – إحصائيات استخدامك\n"
-        "/settings – معلومات الاشتراك\n"
-        "/admin_info – معلومات الأدمن\n\n"
-        "💡 *مثال:* أرسل رابط مثل:\n"
-        "`https://www.instagram.com/reel/XXXXX/`",
-        parse_mode=ParseMode.MARKDOWN
-    )
+    try:
+        # إضافة المستخدم إلى قاعدة البيانات
+        await db.add_or_update_user(user_id, user.username or "", user.first_name or "", user.last_name or "")
+        logger.info(f"User {user_id} added/updated in database")
+        
+        # رسالة ترحيب مباشرة (بدون فحص اشتراك)
+        await update.message.reply_text(
+            "👋 *مرحباً بك في بوت تحميل محتوى انستغرام!*\n\n"
+            "أرسل لي رابط انستغرام عام (ريلز، فيديوهات، صور، البومات) وسأقوم بتحميله بأعلى جودة.\n\n"
+            "📋 *الأوامر المتاحة:*\n"
+            "/start – بدء البوت\n"
+            "/help – تعليمات المساعدة\n"
+            "/stats – إحصائيات استخدامك\n"
+            "/settings – معلومات الاشتراك\n"
+            "/admin_info – معلومات الأدمن\n\n"
+            "💡 *مثال:* أرسل رابط مثل:\n"
+            "`https://www.instagram.com/reel/XXXXX/`",
+            parse_mode=ParseMode.MARKDOWN
+        )
+        logger.info(f"Welcome message sent to user {user_id}")
+        
+    except Exception as e:
+        logger.error(f"Error in start command: {e}")
+        await update.message.reply_text(
+            "❌ حدث خطأ في البوت. يرجى المحاولة مرة أخرى.",
+            parse_mode=ParseMode.MARKDOWN
+        )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """أمر المساعدة مع فحص الاشتراك."""
+    """أمر المساعدة."""
     user_id = update.effective_user.id
-    
-    # فحص الاشتراك
-    is_subscribed, unsubscribed = await check_user_subscription(context.bot, user_id)
-    if not is_subscribed:
-        await send_subscription_message(update, unsubscribed)
-        return
     
     await update.message.reply_text(
         "📘 *كيفية استخدام البوت:*\n\n"
@@ -104,12 +103,6 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """عرض إحصائيات المستخدم."""
     user = update.effective_user
     user_id = user.id
-    
-    # فحص الاشتراك
-    is_subscribed, unsubscribed = await check_user_subscription(context.bot, user_id)
-    if not is_subscribed:
-        await send_subscription_message(update, unsubscribed)
-        return
     
     user_data = await db.get_user(user_id)
     if not user_data:
@@ -135,12 +128,6 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """عرض إعدادات المستخدم."""
     user = update.effective_user
     user_id = user.id
-    
-    # فحص الاشتراك
-    is_subscribed, unsubscribed = await check_user_subscription(context.bot, user_id)
-    if not is_subscribed:
-        await send_subscription_message(update, unsubscribed)
-        return
     
     user_data = await db.get_user(user_id)
     premium = user_data['is_premium'] if user_data else False
@@ -184,81 +171,29 @@ async def admin_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # -------------------------------
-# معالج أزرار الاشتراك
+# معالج أزرار الاشتراك (معطل)
 # -------------------------------
 async def check_subscription_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """معالج الضغط على زر التحقق من الاشتراك."""
+    """معالج الضغط على زر التحقق من الاشتراك - معطل."""
     query = update.callback_query
-    user_id = query.from_user.id
+    await query.answer("نظام الاشتراك معطل حالياً")
     
-    await query.answer()
-    
-    # التحقق من الاشتراك مرة أخرى
-    is_subscribed, unsubscribed = await check_user_subscription(context.bot, user_id)
-    
-    if is_subscribed:
-        # حذف رسالة الاشتراك
-        try:
-            await query.message.delete()
-        except:
-            pass
-        
-        # إرسال رسالة ترحيب
-        await context.bot.send_message(
-            chat_id=user_id,
-            text=(
-                "🎉 *تم التحقق بنجاح!*\n\n"
-                "✅ أنت مشترك الآن في جميع القنوات المطلوبة.\n"
-                "🚀 يمكنك الآن استخدام البوت بحرية.\n\n"
-                "📤 أرسل رابط انستغرام للتحميل.\n"
-                "📖 للمساعدة: /help"
-            ),
-            parse_mode="Markdown"
-        )
-    else:
-        # تحديث الرسالة مع القنوات المتبقية
-        channels_list = "\n".join([
-            f"• [{ch['name']}]({ch['url']})"
-            for ch in unsubscribed
-        ])
-        
-        new_text = (
-            "⚠️ *لم تشترك بعد في:*\n\n"
-            f"{channels_list}\n\n"
-            "📢 اشترك في القنوات أعلاه ثم اضغط على الزر أدناه 👇"
-        )
-        
-        keyboard = get_subscription_keyboard(unsubscribed)
-        
-        try:
-            await query.message.edit_text(
-                new_text,
-                reply_markup=keyboard,
-                parse_mode="Markdown",
-                disable_web_page_preview=True
-            )
-        except Exception as e:
-            logger.error(f"خطأ في تحديث رسالة الاشتراك: {e}")
+    await query.message.reply_text(
+        "✅ النظام يعمل بشكل طبيعي.\nأرسل /start للبدء.",
+        parse_mode=ParseMode.MARKDOWN
+    )
 
 # -------------------------------
 # معالج الرسائل (رابط انستغرام)
 # -------------------------------
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """معالج الرسائل الرئيسي مع فحص الاشتراك الإجباري."""
+    """معالج الرسائل الرئيسي."""
     if not update.message or not update.message.text:
         return
 
     user = update.effective_user
     user_id = user.id
     text = update.message.text.strip()
-
-    # ============ فحص الاشتراك الإجباري ============
-    is_subscribed, unsubscribed = await check_user_subscription(context.bot, user_id)
-    
-    if not is_subscribed:
-        await send_subscription_message(update, unsubscribed)
-        return
-    # =============================================
 
     # فحص وضع الصيانة
     if await is_maintenance(user_id):
@@ -674,11 +609,12 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     from subscription import REQUIRED_CHANNELS
     
-    text = "*📢 القنوات الإجبارية للاشتراك:*\n\n"
-    for i, ch in enumerate(REQUIRED_CHANNELS, 1):
-        text += f"{i}. {ch['name']}\n   {ch['username']}\n\n"
-    
-    text += "🔄 لتعديل القنوات، افتح ملف `subscription.py`"
+    if not REQUIRED_CHANNELS:
+        text = "📢 *نظام الاشتراك الإجباري:* معطل حالياً"
+    else:
+        text = "*📢 القنوات الإجبارية للاشتراك:*\n\n"
+        for i, ch in enumerate(REQUIRED_CHANNELS, 1):
+            text += f"{i}. {ch['name']}\n   {ch['username']}\n\n"
     
     await update.message.reply_text(text, parse_mode="Markdown")
 
@@ -705,7 +641,7 @@ def register_handlers(app):
     app.add_handler(CommandHandler("maintenance", maintenance_cmd))
     app.add_handler(CommandHandler("channels", list_channels))
     
-    # معالج أزرار الاشتراك
+    # معالج أزرار الاشتراك (معطل)
     app.add_handler(CallbackQueryHandler(check_subscription_callback, pattern="^check_subscription$"))
     
     # معالج الرسائل النصية (روابط انستغرام)
