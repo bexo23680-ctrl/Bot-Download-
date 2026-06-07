@@ -12,4 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN mkdir -p downloads logs
 
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080')" || exit 1
+
 CMD ["python", "bot.py"]
