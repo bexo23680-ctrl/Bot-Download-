@@ -548,7 +548,7 @@ def register_handlers(app):
     """تسجيل جميع معالجات البوت."""
     
     # الأوامر الأساسية
-    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("hi", start))
     
     # معالج الأزرار
     app.add_handler(CallbackQueryHandler(handle_callback))
